@@ -1,8 +1,10 @@
 import argparse
 import re
+import shutil
 
 from gradio_client import Client, handle_file
 from huggingface_hub import HfApi
+from tqdm import tqdm
 
 api = HfApi()
 repo_files = api.list_repo_files(repo_id="dylanebert/3d-arena", repo_type="dataset")
@@ -19,8 +21,11 @@ input_files = [
 
 def run(repo_id):
     client = Client(repo_id)
-    result = client.predict(input_image=input_files[0])
-    print(result)
+    for input_file in tqdm(list(input_files)):
+        filename = input_file["path"].split("/")[-1].replace(".jpg", "")
+        result = client.predict(input_image=input_file)
+        output_path = f"outputs/{filename}.ply"
+        shutil.move(result, output_path)
 
 
 if __name__ == "__main__":
